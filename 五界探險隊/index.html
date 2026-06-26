@@ -12,7 +12,7 @@
   --bg:#0d0d1a;--card:#13132b;--dim:rgba(100,100,200,0.22);
   --fs:1.3; /* 放大係數 */
 }
-html{font-size:20.8px;} /* 16px × 1.3 */
+html{font-size:17.68px;} /* 20.8px × 0.85 */
 body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:#f0f0ff;min-height:100vh;overflow-x:hidden;transition:background .15s;}
 body.flash-good{animation:fgood .4s ease;}
 body.flash-bad{animation:fbad .4s ease;}
@@ -31,16 +31,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;}
 .hud .time-low .hv{color:var(--nr);}
 
 /* Screens */
-.wrap{max-width:900px;margin:0 auto;padding:90px 20px 50px;}
+.wrap{max-width:900px;margin:0 auto;padding:70px 20px 10px;}
 .screen{display:none;animation:fadein .25s ease;}
 .screen.active{display:block;}
 @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
 /* Start screen */
-.brand-badge{display:inline-block;background:rgba(57,255,144,.12);border:2px solid var(--ng);color:var(--ng);font-size:0.75rem;letter-spacing:2px;padding:5px 18px;border-radius:20px;margin-bottom:16px;font-weight:700;}
+
 .title-main{font-size:2.4rem;font-weight:900;background:linear-gradient(135deg,var(--nb),var(--np));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
 .title-sub{font-size:0.9rem;color:#aaaadd;margin-top:10px;line-height:1.8;}
-.bio-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.bio-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;margin-bottom:0;}
+.sec-label{font-size:0.72rem;letter-spacing:2px;color:#9090cc;text-transform:uppercase;margin:0 0 10px;font-weight:700;}
 .bio-tag{border:1px solid rgba(200,200,255,0.3);background:rgba(255,255,255,.06);color:#d0d0ee;border-radius:20px;padding:6px 14px;font-size:0.8rem;font-weight:700;}
 .sec-label{font-size:0.72rem;letter-spacing:2px;color:#9090cc;text-transform:uppercase;margin:24px 0 12px;font-weight:700;}
 .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -171,9 +172,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;}
 
 <!-- 開始畫面 -->
 <div id="start-screen" class="screen active">
-  <div style="padding:24px 0 32px;">
-    <div class="brand-badge">🔬 Enid 生物特訓</div>
-    <div class="title-main">五界生物探險隊</div>
+  <div style="padding:0 0 10px;">
+    <div class="title-main">🔬 Enid生物特訓－五界探險隊</div>
     <p class="title-sub">細菌、真菌、植物與動物——把分類線索一個個找回來。<br>答錯留下提示，下一輪直接補強最混淆的地方。</p>
     <div class="bio-tags">
       <span class="bio-tag">原核生物界</span><span class="bio-tag">原生生物界</span>
