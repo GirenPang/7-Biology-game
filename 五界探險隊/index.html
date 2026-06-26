@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五界生物探險隊</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ng:#39ff90;--nb:#00cfff;--np:#c77dff;--nr:#ff4d6d;--ny:#ffe066;
+  --bg:#0d0d1a;--card:#13132b;--dim:rgba(100,100,200,0.22);
+  --fs:1.3; /* 放大係數 */
+}
+html{font-size:20.8px;} /* 16px × 1.3 */
+body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:#f0f0ff;min-height:100vh;overflow-x:hidden;transition:background .15s;}
+body.flash-good{animation:fgood .4s ease;}
+body.flash-bad{animation:fbad .4s ease;}
+body.time-alert{animation:tpulse .85s ease-in-out infinite;}
+@keyframes fgood{0%,100%{filter:none;}45%{filter:brightness(1.12) saturate(1.3);}}
+@keyframes fbad{0%,100%{filter:none;}45%{filter:sepia(.2) saturate(1.4);}}
+@keyframes tpulse{0%,100%{box-shadow:inset 0 0 0 rgba(255,77,109,0);}50%{box-shadow:inset 0 0 0 13px rgba(255,77,109,.18);}}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;}
+
+/* HUD */
+.hud{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(10,10,28,.97);border-bottom:2px solid var(--dim);padding:10px 24px;display:flex;justify-content:center;gap:36px;flex-wrap:wrap;backdrop-filter:blur(8px);}
+.hi{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.hl{font-size:0.65rem;color:#9090cc;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+.hv{font-size:1.25rem;font-weight:900;}
+.hv.g{color:var(--ng);}.hv.b{color:var(--nb);}.hv.r{color:var(--nr);}.hv.y{color:var(--ny);}
+.hud .time-low .hv{color:var(--nr);}
+
+/* Screens */
+.wrap{max-width:900px;margin:0 auto;padding:90px 20px 50px;}
+.screen{display:none;animation:fadein .25s ease;}
+.screen.active{display:block;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* Start screen */
+.brand-badge{display:inline-block;background:rgba(57,255,144,.12);border:2px solid var(--ng);color:var(--ng);font-size:0.75rem;letter-spacing:2px;padding:5px 18px;border-radius:20px;margin-bottom:16px;font-weight:700;}
+.title-main{font-size:2.4rem;font-weight:900;background:linear-gradient(135deg,var(--nb),var(--np));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+.title-sub{font-size:0.9rem;color:#aaaadd;margin-top:10px;line-height:1.8;}
+.bio-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.bio-tag{border:1px solid rgba(200,200,255,0.3);background:rgba(255,255,255,.06);color:#d0d0ee;border-radius:20px;padding:6px 14px;font-size:0.8rem;font-weight:700;}
+.sec-label{font-size:0.72rem;letter-spacing:2px;color:#9090cc;text-transform:uppercase;margin:24px 0 12px;font-weight:700;}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px;}
+.mode-card,.level-card{background:var(--card);border:2px solid var(--dim);border-radius:14px;padding:20px 16px;cursor:pointer;text-align:left;transition:.18s;}
+.mode-card:hover{border-color:var(--nb);transform:translateY(-2px);}
+.mode-card.sel{border-color:var(--nb);background:rgba(0,207,255,.09);}
+.level-card:hover{border-color:var(--np);}
+.level-card.sel{border-color:var(--np);background:rgba(199,125,255,.09);}
+.mc-icon{font-size:1.8rem;margin-bottom:8px;}
+.mc-name{font-size:1rem;font-weight:900;color:#f0f0ff;}
+.mc-desc{font-size:0.78rem;color:#9090cc;margin-top:4px;font-weight:700;}
+.lc-name{font-size:1.05rem;font-weight:900;margin-bottom:5px;}
+.lc-desc{font-size:0.8rem;color:#aaaadd;font-weight:700;}
+.start-btn{display:block;width:100%;padding:18px;font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,var(--nb),var(--np));color:#0d0d1a;border-radius:14px;cursor:pointer;letter-spacing:2px;transition:.15s;}
+.start-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+
+/* Quiz screen */
+.quiz-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.chapter-tag{display:inline-flex;align-items:center;background:rgba(57,255,144,.1);border:2px solid rgba(57,255,144,.4);color:var(--ng);border-radius:20px;padding:6px 16px;font-size:0.85rem;font-weight:900;}
+.count-label{font-size:0.85rem;color:#aaaadd;font-weight:700;}
+.progress-bar{height:4px;background:rgba(100,100,200,.2);border-radius:2px;margin-bottom:22px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--nb),var(--np));transition:width .4s ease;border-radius:2px;}
+.question-card{background:var(--card);border:2px solid var(--dim);border-radius:16px;padding:26px 24px;margin-bottom:18px;}
+.question-text{font-size:1.15rem;font-weight:700;line-height:1.8;color:#f0f0ff;}
+
+/* Visual slot */
+.bio-visual{display:grid;place-items:center;border-radius:12px;border:2px solid var(--dim);background:rgba(255,255,255,.03);padding:12px;margin-bottom:16px;}
+.bio-visual svg{width:min(90%,300px);height:auto;}
+
+/* Options */
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.opt-btn{background:var(--card);border:2px solid rgba(160,160,220,0.3);border-radius:12px;padding:18px 16px;cursor:pointer;text-align:left;font-size:0.95rem;color:#e8e8ff;transition:.15s;font-family:inherit;line-height:1.6;font-weight:700;}
+.opt-btn:not([disabled]):hover{border-color:var(--nb);color:#fff;background:rgba(0,207,255,.09);}
+.opt-btn.correct{border-color:var(--ng)!important;background:rgba(57,255,144,.12)!important;color:var(--ng)!important;}
+.opt-btn.wrong{border-color:var(--nr)!important;background:rgba(255,77,109,.12)!important;color:var(--nr)!important;}
+.opt-btn:disabled{cursor:default;}
+
+/* Match */
+.match-board{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;}
+.match-col{display:grid;gap:10px;}
+.match-col-title{font-size:0.72rem;color:#9090cc;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;font-weight:700;}
+.match-card{background:var(--card);border:2px solid rgba(160,160,220,0.3);border-radius:12px;padding:15px 14px;cursor:pointer;text-align:left;font-size:0.88rem;color:#e8e8ff;transition:.15s;font-family:inherit;font-weight:700;}
+.match-card:hover:not([disabled]){border-color:var(--nb);}
+.match-card.sel{border-color:var(--ny);background:rgba(255,224,102,.1);color:var(--ny);}
+.match-card.correct{border-color:var(--ng)!important;background:rgba(57,255,144,.12)!important;color:var(--ng)!important;}
+.match-card.wrong{border-color:var(--nr)!important;background:rgba(255,77,109,.12)!important;color:var(--nr)!important;}
+.match-card.done{opacity:.6;pointer-events:none;}
+.match-card:disabled{cursor:default;}
+
+/* Sort */
+.sort-board{display:grid;gap:16px;margin-top:14px;}
+.sort-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;}
+.sort-zone{background:rgba(57,255,144,.05);border:2px dashed rgba(57,255,144,.3);border-radius:12px;min-height:110px;padding:12px;text-align:left;cursor:pointer;transition:.15s;}
+.sort-zone:hover{border-color:var(--nb);}
+.sort-zone strong{display:block;color:var(--ng);font-size:0.82rem;margin-bottom:8px;font-weight:900;}
+.sort-drop-list{display:grid;gap:6px;}
+.sort-pill{background:rgba(255,255,255,.06);border:2px solid rgba(160,160,220,0.3);border-radius:20px;padding:5px 10px;font-size:0.8rem;color:#e8e8ff;font-weight:700;}
+.sort-pill.correct{border-color:var(--ng);color:var(--ng);background:rgba(57,255,144,.1);}
+.sort-pill.wrong{border-color:var(--nr);color:var(--nr);background:rgba(255,77,109,.1);}
+.sort-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+.sort-card{background:var(--card);border:2px solid rgba(160,160,220,0.3);border-radius:10px;padding:12px;font-size:0.88rem;font-weight:900;text-align:center;cursor:pointer;transition:.15s;color:#e8e8ff;font-family:inherit;}
+.sort-card:hover:not(.done):not([disabled]){border-color:var(--nb);}
+.sort-card.sel{border-color:var(--ny);background:rgba(255,224,102,.1);color:var(--ny);}
+.sort-card.done{opacity:.35;pointer-events:none;}
+
+/* Feature */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.feat-btn{background:var(--card);border:2px solid rgba(160,160,220,0.3);border-radius:12px;padding:15px 14px;cursor:pointer;text-align:left;font-size:0.88rem;color:#e8e8ff;transition:.15s;font-family:inherit;font-weight:700;}
+.feat-btn:hover:not([disabled]){border-color:var(--nb);}
+.feat-btn.sel{border-color:var(--ny);background:rgba(255,224,102,.1);color:var(--ny);}
+.feat-btn.correct{border-color:var(--ng)!important;background:rgba(57,255,144,.12)!important;color:var(--ng)!important;}
+.feat-btn.wrong{border-color:var(--nr)!important;background:rgba(255,77,109,.12)!important;color:var(--nr)!important;}
+.feat-btn.missed{border-color:var(--ng)!important;background:rgba(57,255,144,.06)!important;color:var(--ng)!important;outline:2px dashed rgba(57,255,144,.5);outline-offset:-4px;}
+.feat-btn:disabled{cursor:default;}
+
+/* Feedback */
+.feedback{border-radius:14px;border:2px solid var(--dim);padding:18px 20px;margin-top:16px;display:none;}
+.feedback.show{display:block;}
+.feedback.good{background:rgba(57,255,144,.09);border-color:rgba(57,255,144,.4);}
+.feedback.bad{background:rgba(255,77,109,.09);border-color:rgba(255,77,109,.4);}
+.fb-title{display:block;margin-bottom:8px;font-size:1rem;font-weight:900;}
+.feedback.good .fb-title{color:var(--ng);}
+.feedback.bad .fb-title{color:var(--nr);}
+.fb-text{font-size:0.88rem;color:#ccccee;line-height:1.9;font-weight:700;}
+
+/* Controls */
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+.primary-btn{padding:13px 26px;font-size:0.95rem;font-weight:900;background:linear-gradient(135deg,var(--nb),var(--np));color:#0d0d1a;border-radius:12px;cursor:pointer;font-family:inherit;transition:.15s;}
+.primary-btn:hover{filter:brightness(1.1);}
+.secondary-btn{padding:13px 26px;font-size:0.95rem;font-weight:900;background:rgba(255,255,255,.06);border:2px solid rgba(160,160,220,0.35);color:#d0d0ee;border-radius:12px;cursor:pointer;font-family:inherit;transition:.15s;}
+.secondary-btn:hover{border-color:var(--np);color:var(--np);}
+.submit-btn{display:inline-block;padding:13px 28px;background:rgba(57,255,144,.12);border:2px solid var(--ng);color:var(--ng);border-radius:12px;cursor:pointer;font-size:0.95rem;font-weight:900;font-family:inherit;transition:.15s;}
+.submit-btn:hover{background:rgba(57,255,144,.22);}
+.hidden{display:none!important;}
+
+/* End screen */
+.end-card{background:var(--card);border:2px solid var(--dim);border-radius:20px;padding:44px 34px;text-align:center;}
+.end-eyebrow{font-size:0.72rem;letter-spacing:2px;color:#9090cc;text-transform:uppercase;margin-bottom:12px;font-weight:700;}
+.end-score{font-size:5rem;font-weight:900;background:linear-gradient(135deg,var(--nb),var(--np));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.end-of-max{font-size:0.88rem;color:#aaaadd;margin:8px 0 16px;font-weight:700;}
+.rank-badge{display:inline-block;padding:8px 28px;border-radius:30px;font-size:1.4rem;font-weight:900;letter-spacing:2px;margin-bottom:20px;}
+.end-msg{font-size:1rem;color:#e0e0ff;line-height:1.8;margin-bottom:26px;font-weight:700;}
+.review-list{display:grid;gap:12px;margin-top:20px;text-align:left;}
+.review-item{background:rgba(255,255,255,.05);border:2px solid var(--dim);border-radius:12px;padding:16px 18px;}
+.review-item strong{display:block;margin-bottom:6px;font-size:0.95rem;color:#f0f0ff;}
+.review-item .ri-yours{font-size:0.82rem;color:#ff7090;margin-bottom:3px;font-weight:700;}
+.review-item .ri-correct{font-size:0.82rem;color:#39ff90;margin-bottom:5px;font-weight:700;}
+.review-item .ri-hint{font-size:0.82rem;color:#aaaacc;line-height:1.8;font-weight:700;}
+
+@media(max-width:560px){
+  .mode-grid,.level-grid,.options-grid,.match-board,.feature-grid{grid-template-columns:1fr;}
+  .hud{gap:16px;}
+  html{font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="hud">
+  <div class="hi"><span class="hl">難度</span><span class="hv g" id="hud-level">—</span></div>
+  <div class="hi" id="hud-time-box"><span class="hl">倒數</span><span class="hv b" id="hud-time">—</span></div>
+  <div class="hi"><span class="hl">生命</span><span class="hv r" id="hud-lives">—</span></div>
+  <div class="hi"><span class="hl">分數</span><span class="hv y" id="hud-score">0</span></div>
+</div>
+
+<div class="wrap">
+
+<!-- 開始畫面 -->
+<div id="start-screen" class="screen active">
+  <div style="padding:24px 0 32px;">
+    <div class="brand-badge">🔬 Enid 生物特訓</div>
+    <div class="title-main">五界生物探險隊</div>
+    <p class="title-sub">細菌、真菌、植物與動物——把分類線索一個個找回來。<br>答錯留下提示，下一輪直接補強最混淆的地方。</p>
+    <div class="bio-tags">
+      <span class="bio-tag">原核生物界</span><span class="bio-tag">原生生物界</span>
+      <span class="bio-tag">真菌界</span><span class="bio-tag">植物界</span><span class="bio-tag">動物界</span>
+    </div>
+  </div>
+
+  <div class="sec-label">選擇練習模式</div>
+  <div class="mode-grid" id="mode-grid">
+    <div class="mode-card sel" data-mode="choice">
+      <div class="mc-icon">⚡</div><div class="mc-name">選擇題</div><div class="mc-desc">四選一判斷</div>
+    </div>
+    <div class="mode-card" data-mode="sort">
+      <div class="mc-icon">🗂️</div><div class="mc-name">分類歸位</div><div class="mc-desc">卡片放對分類框</div>
+    </div>
+    <div class="mode-card" data-mode="feature">
+      <div class="mc-icon">☑️</div><div class="mc-name">特徵勾選</div><div class="mc-desc">多選正確特徵</div>
+    </div>
+  </div>
+
+  <div class="sec-label">選擇難度</div>
+  <div class="level-grid" id="level-grid">
+    <div class="level-card sel" data-level="easy">
+      <div class="lc-name" style="color:var(--ng)">🌿 初級</div>
+      <div class="lc-desc">10題｜30秒／題｜3心</div>
+      <div class="lc-desc" style="margin-top:5px">建立五界基本感</div>
+    </div>
+    <div class="level-card" data-level="medium">
+      <div class="lc-name" style="color:var(--nb)">⚡ 中級</div>
+      <div class="lc-desc">12題｜20秒／題｜3心</div>
+      <div class="lc-desc" style="margin-top:5px">加入比較與歸位</div>
+    </div>
+    <div class="level-card" data-level="hard">
+      <div class="lc-name" style="color:var(--nr)">🔥 高級</div>
+      <div class="lc-desc">15題｜10秒／題｜2心</div>
+      <div class="lc-desc" style="margin-top:5px">混合限時高難度</div>
+    </div>
+  </div>
+
+  <button class="start-btn" id="start-btn">開始挑戰 →</button>
+</div>
+
+<!-- 答題畫面 -->
+<div id="quiz-screen" class="screen">
+  <div class="quiz-meta">
+    <span class="chapter-tag" id="chapter-label">章節</span>
+    <span class="count-label" id="count-label">第 1 題</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="question-card">
+    <div id="visual-slot"></div>
+    <div class="question-text" id="question-text">題目載入中...</div>
+  </div>
+  <div id="answer-area"></div>
+  <div id="feedback" class="feedback">
+    <span class="fb-title" id="fb-title"></span>
+    <div class="fb-text" id="fb-text"></div>
+  </div>
+  <div class="controls">
+    <button class="primary-btn hidden" id="next-btn">下一題 →</button>
+    <button class="secondary-btn" id="quit-btn">回到選單</button>
+  </div>
+</div>
+
+<!-- 結算畫面 -->
+<div id="end-screen" class="screen">
+  <div class="end-card">
+    <div class="end-eyebrow">本輪結算</div>
+    <div class="end-score" id="end-score">0</div>
+    <div class="end-of-max" id="end-max">/ 0 分</div>
+    <div class="rank-badge" id="rank-badge">C</div>
+    <div class="end-msg" id="end-msg">繼續加油！</div>
+    <div class="controls" style="justify-content:center;">
+      <button class="primary-btn" id="retry-wrong-btn">重練錯題</button>
+      <button class="secondary-btn" id="restart-btn">重新選等級</button>
+    </div>
+    <div class="review-list" id="review-list"></div>
+  </div>
+</div>
+
+</div><!-- .wrap -->
+
+<script>
+const LEVELS={
+  easy:{label:"初級",count:10,seconds:30,hearts:3,maxD:1},
+  medium:{label:"中級",count:12,seconds:20,hearts:3,maxD:2},
+  hard:{label:"高級",count:15,seconds:10,hearts:2,maxD:3}
+};
+
+const VISUALS={
+  mushroom:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><path d="M45 84c3-38 37-58 75-43 29 12 46 40 40 77H42c-2-12-1-23 3-34Z" fill="#d86f56"/><path d="M88 112h45l14 44H74l14-44Z" fill="#9b6b3a"/><circle cx="75" cy="66" r="9" fill="#fff3de" opacity=".7"/><circle cx="113" cy="55" r="7" fill="#fff3de" opacity=".7"/><circle cx="141" cy="78" r="8" fill="#fff3de" opacity=".7"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">無葉綠體、有菌絲</text></svg>`,
+  fern:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><path d="M101 146C69 113 66 76 92 47c16-18 41-27 74-25-31 18-45 43-45 70 0 25-6 43-20 54Z" fill="#39ff90" opacity=".7"/><path d="M99 146c-5-53 14-95 65-124M99 111c-22-6-39-3-56 10M105 88c-20-20-38-30-58-31M119 66c-14-24-23-40-25-56" fill="none" stroke="#00cfff" stroke-width="6" stroke-linecap="round"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">有維管束、孢子繁殖</text></svg>`,
+  insect:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><ellipse cx="99" cy="91" rx="43" ry="30" fill="#00cfff" opacity=".6"/><ellipse cx="149" cy="82" rx="23" ry="20" fill="#00cfff" opacity=".6"/><path d="M66 79 31 51M64 97 28 105M91 61 76 28M96 119 75 150M123 62 146 29M122 119 151 145" stroke="#c77dff" stroke-width="7" stroke-linecap="round"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">分節、外骨骼、附肢</text></svg>`,
+  seed:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><path d="M85 134c28-22 37-58 22-101C78 56 65 91 85 134Z" fill="#c8a566" opacity=".8"/><path d="M112 134c34-18 45-55 34-98-31 20-49 53-34 98Z" fill="#39ff90" opacity=".6"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">種子裸露、沒有花</text></svg>`,
+  bacteria:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><ellipse cx="84" cy="88" rx="45" ry="24" transform="rotate(-24 84 88)" fill="#00cfff" opacity=".55"/><ellipse cx="142" cy="78" rx="34" ry="18" transform="rotate(22 142 78)" fill="#39ff90" opacity=".55"/><path d="M43 60c-18-9-24-20-17-34M58 124c-16 9-27 19-27 34M143 104c14 14 24 24 43 26M162 63c16-8 27-18 31-34" stroke="#c77dff" stroke-width="5" stroke-linecap="round"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">無細胞核、單細胞</text></svg>`,
+  algae:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><path d="M52 137c8-36 11-68 4-104M90 139c-4-42 4-77 29-106M137 139c20-31 27-63 22-98" stroke="#39ff90" stroke-width="9" stroke-linecap="round"/><path d="M56 74c-16-8-29-8-39 0M91 97c-16-13-34-18-55-15M114 67c17-18 35-27 55-26M142 99c18-9 35-12 51-6" stroke="#00cfff" stroke-width="6" stroke-linecap="round"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">自營、藻類</text></svg>`,
+  moss:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><path d="M34 136h152" stroke="#8d6b42" stroke-width="8" stroke-linecap="round"/><path d="M66 136V82M102 136V69M139 136V88" stroke="#39ff90" stroke-width="7" stroke-linecap="round"/><ellipse cx="75" cy="84" rx="18" ry="9" fill="#39ff90" opacity=".5"/><ellipse cx="112" cy="68" rx="20" ry="10" fill="#39ff90" opacity=".5"/><ellipse cx="151" cy="88" rx="18" ry="9" fill="#39ff90" opacity=".5"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">無維管束、蘚苔</text></svg>`,
+  flower:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><path d="M108 142V92" stroke="#39ff90" stroke-width="8" stroke-linecap="round"/><circle cx="108" cy="72" r="17" fill="#ffe066"/><ellipse cx="108" cy="41" rx="17" ry="25" fill="#c77dff" opacity=".7"/><ellipse cx="108" cy="103" rx="17" ry="25" fill="#c77dff" opacity=".7"/><ellipse cx="77" cy="72" rx="25" ry="17" fill="#c77dff" opacity=".7"/><ellipse cx="139" cy="72" rx="25" ry="17" fill="#c77dff" opacity=".7"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">有花、種子包覆</text></svg>`,
+  fish:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><ellipse cx="105" cy="88" rx="58" ry="31" fill="#00cfff" opacity=".55"/><path d="M160 88l34-28v56l-34-28Z" fill="#00cfff" opacity=".8"/><circle cx="55" cy="83" r="5" fill="#ffe066"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">鰓呼吸、外溫</text></svg>`,
+  bird:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><ellipse cx="104" cy="91" rx="43" ry="30" fill="#ffe066" opacity=".6"/><circle cx="143" cy="66" r="22" fill="#ffe066" opacity=".6"/><path d="M163 66h31l-28 14Z" fill="#ffe066"/><path d="M82 90c-18 6-34 16-49 31 31 2 58-6 81-25" fill="#00cfff" opacity=".6"/><circle cx="151" cy="60" r="4" fill="#0d0d1a"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">羽毛、內溫、卵生</text></svg>`,
+  mammal:`<svg viewBox="0 0 220 170"><rect width="220" height="170" rx="18" fill="#0d0d1a"/><ellipse cx="111" cy="93" rx="55" ry="32" fill="#c77dff" opacity=".5"/><circle cx="64" cy="74" r="25" fill="#c77dff" opacity=".5"/><circle cx="49" cy="52" r="10" fill="#9b4dca"/><circle cx="76" cy="51" r="10" fill="#9b4dca"/><circle cx="56" cy="75" r="4" fill="#ffe066"/><text x="110" y="20" text-anchor="middle" fill="#39ff90" font-size="13" font-weight="800">肺、內溫、哺乳</text></svg>`
+};
+
+const CHEERS=["沒關係，這題本來就是常見混淆點。","差一點，抓到關鍵字就會穩很多。","先不用急，找到自己卡住的線索就賺到了。","這題錯得有價值，解析看完再遇到就比較不會掉分。"];
+
+const C=(ch,d,q,opts,ans,hint)=>({type:"choice",ch,d,q,opts,ans,hint});
+const I=(ch,d,q,vis,opts,ans,hint)=>({type:"image",ch,d,q,vis,opts,ans,hint});
+const M=(ch,d,q,pairs,hint)=>({type:"match",ch,d,q,pairs,hint});
+const S=(ch,d,q,cats,items,hint)=>({type:"sort",ch,d,q,cats,items:items.map(([t,c])=>({t,c})),hint});
+const F=(ch,d,target,correct,distractors,hint)=>({type:"feature",ch,d,q:`請選出「${target}」的正確特徵（可複選）。`,target,features:[...correct.map(t=>({t,ok:true})),...distractors.map(t=>({t,ok:false}))],hint});
+
+const Q=[
+  C("原核生物界",1,"下列哪一項最能判斷某生物屬於原核生物界？",["沒有細胞核","具有維管束","具有花粉管","身體有分節"],0,"原核生物界的重點是沒有細胞核。細菌與藍綠菌都沒有細胞核，但有細胞壁。"),
+  C("原核生物界",2,"藍綠菌有葉綠素，為什麼仍不屬於植物界？",["因為沒有細胞核","因為沒有細胞壁","因為是多細胞","因為有菌絲"],0,"藍綠菌雖然有葉綠素，但沒有細胞核，屬於原核生物，不是植物界。"),
+  C("原核生物界",1,"細菌與藍綠菌共同具有下列哪一項？",["細胞壁","細胞核","維管束","花"],0,"細菌與藍綠菌都沒有細胞核，但都有細胞壁。"),
+  C("原生生物界",1,"原生生物界若依獲取養分方式分類，藻類主要屬於哪一類？",["自營","分解","異營","寄生"],0,"藻類是自營；原生菌類多為分解或異營；原生動物類為異營。"),
+  C("原生生物界",2,"昆布、矽藻、石蓴、紫菜在主要歸在哪一類？",["藻類","蕈","裸子植物","節肢動物"],0,"昆布、矽藻、石蓴、紫菜屬於藻類，歸入原生生物界。"),
+  C("真菌界",1,"下列哪個特徵最能排除真菌是植物？",["沒有葉綠體","有細胞壁","可行生殖","有細胞質"],0,"真菌有細胞壁，但沒有葉綠體，不能像植物一樣行光合作用。"),
+  C("真菌界",2,"木耳、靈芝、毒蠅傘在屬於哪一類？",["蕈","黴菌","酵母菌","藍綠菌"],0,"木耳、靈芝、毒蠅傘是蕈類；酵母菌是單細胞真菌。"),
+  C("植物界",1,"蘚苔、蕨類、裸子、被子植物都共同具有下列哪一項？",["細胞壁","花","花粉管","維管束"],0,"植物界四大類都有細胞壁、葉綠體與角質層。"),
+  C("植物界",1,"地錢、土馬騌在屬於哪一類植物？",["蘚苔","蕨類","裸子植物","被子植物"],0,"地錢、土馬騌是蘚苔的常見例子。"),
+  C("植物界",2,"下列哪一類植物沒有維管束？",["蘚苔","蕨類","裸子植物","被子植物"],0,"蘚苔沒有維管束；蕨類、裸子植物、被子植物都有維管束。"),
+  C("植物界",2,"松、杉、柏、檜、蘇鐵、銀杏屬於哪一類？",["裸子植物","被子植物","蕨類","蘚苔"],0,"這些是裸子植物的常見例子。裸子植物有種子，但沒有花。"),
+  C("植物界",3,"下列哪一項最能區分裸子植物與被子植物？",["種子是否被果實包覆","是否有細胞壁","是否有葉綠體","是否有角質層"],0,"裸子植物種子裸露；被子植物的種子被果實包覆。"),
+  C("植物界",3,"單子葉植物與雙子葉植物哪一項配對正確？",["單子葉平行脈，雙子葉網狀脈","單子葉軸根，雙子葉鬚根","單子葉花4或5倍，雙子葉花3倍","單子葉有菌絲，雙子葉無菌絲"],0,"單子葉為平行脈、鬚根、花3的倍數；雙子葉為網狀脈、軸根、花4或5的倍數。"),
+  C("動物界：無脊椎",1,"動物界中種類最多、身體分節且有外骨骼的是哪一門？",["節肢動物門","軟體動物門","刺絲胞動物門","棘皮動物門"],0,"節肢動物門種類最多，身體分節，有口器與外骨骼。"),
+  C("動物界：無脊椎",2,"珊瑚、水螅、水母、海葵屬於哪一門？",["刺絲胞動物門","環節動物門","軟體動物門","節肢動物門"],0,"這些是刺絲胞動物門的常見例子，特徵包含觸手與刺絲胞。"),
+  C("動物界：脊椎",1,"魚類主要用什麼呼吸？",["鰓","肺","皮膚","氣管"],0,"軟骨魚與硬骨魚的呼吸都是鰓。"),
+  C("動物界：脊椎",2,"兩生類幼體與成體的呼吸方式正確配對是？",["幼體用鰓，成體用肺","幼體用肺，成體用鰓","幼體與成體都只用鰓","幼體與成體都只用肺"],0,"兩生類幼體用鰓，成體用肺，皮膚需要保持濕潤。"),
+  C("動物界：脊椎",3,"下列哪一組都屬於內溫動物？",["鳥類、哺乳類","魚類、兩生類","爬蟲類、魚類","兩生類、爬蟲類"],0,"鳥類與哺乳類為內溫；魚類、兩生類、爬蟲類多為外溫。"),
+  C("動物界：脊椎",3,"有胎盤、在母體發育完全後才產出的哺乳類是哪一類？",["胎盤哺乳類","卵生哺乳類","有袋哺乳類","爬蟲類"],0,"胎盤哺乳類有胎盤，在母體發育完全後才產出，常見例子包含人類、鯨魚、蝙蝠。"),
+  C("綜合比較",2,"下列哪一組都沒有細胞核？",["細菌、藍綠菌","藻類、蕈","植物、動物","鳥類、魚類"],0,"細菌與藍綠菌屬於原核生物，沒有細胞核。"),
+  C("綜合比較",2,"若看到「有細胞核、沒有細胞壁」，最可能是哪一界？",["動物界","植物界","真菌界","原核生物界"],0,"動物界有細胞核，但沒有細胞壁。"),
+  C("綜合比較",3,"若看到「有細胞核、有細胞壁、有葉綠體」，最可能是哪一界？",["植物界","動物界","原核生物界","節肢動物門"],0,"植物有細胞核、細胞壁與葉綠體。"),
+  C("綜合比較",3,"若看到「有細胞核、有細胞壁、無葉綠體」，最應先考慮哪一界？",["真菌界","動物界","原核生物界","鳥類"],0,"真菌有細胞核、有細胞壁，但沒有葉綠體。"),
+  C("綜合比較",3,"有維管束但沒有花，且以孢子繁殖，最可能是哪一類？",["蕨類","蘚苔","被子植物","胎盤哺乳類"],0,"蕨類有維管束，但沒有花，以孢子繁殖。"),
+  C("動物界：脊椎",2,"龜、蛇、鱷、蜥屬於哪一類？",["爬蟲類","兩生類","魚類","鳥類"],0,"龜、蛇、鱷、蜥是爬蟲類常見例子。"),
+  C("動物界：脊椎",3,"袋鼠、無尾熊屬於哪一類哺乳類？",["有袋哺乳類","卵生哺乳類","胎盤哺乳類","兩生類"],0,"袋鼠、無尾熊屬於有袋哺乳類，無胎盤，有育兒袋。"),
+  C("動物界：無脊椎",2,"海星、陽燧足、海膽、海參屬於哪一門？",["棘皮動物門","軟體動物門","刺絲胞動物門","環節動物門"],0,"海星、陽燧足、海膽、海參是棘皮動物門，且均為海生。"),
+  C("動物界：無脊椎",2,"沙蠶、蚯蚓、水蛭屬於哪一門？",["環節動物門","刺絲胞動物門","節肢動物門","棘皮動物門"],0,"環節動物門身體柔軟、分節，每節外型相似。"),
+  C("原核生物界",3,"關於藍綠菌，下列敘述何者正確？",["有葉綠素但沒有葉綠體","有細胞核也有葉綠體","沒有細胞壁","屬於真菌界"],0,"藍綠菌有葉綠素可行自營，但沒有葉綠體，也沒有細胞核。"),
+  C("真菌界",3,"下列哪一組特徵最符合真菌界？",["有細胞壁、有菌絲、無葉綠體","無細胞核、有葉綠素、有葉綠體","有維管束、有花粉管、有胚珠","有外骨骼、附肢、身體分節"],0,"真菌界的考點是有細胞壁、常有菌絲、沒有葉綠體。"),
+  C("植物界",3,"下列哪一組最可能是被子植物的常見例子？",["玫瑰、朱槿、稻、百合、玉米","鐵線蕨、筆筒樹、台灣水韭","地錢、土馬騌","水螅、水母、海葵"],0,"玫瑰、朱槿、稻、百合、玉米是被子植物常見例子。"),
+  I("圖片辨識：真菌界",1,"看圖形特徵：這個標本最可能屬於哪一類？","mushroom",["蕈","裸子植物","藍綠菌","節肢動物"],0,"圖中提示為無葉綠體、有菌絲，且外型是蕈類子實體，因此屬於真菌界的蕈。"),
+  I("圖片辨識：植物界",2,"看圖形特徵：有維管束、以孢子繁殖，最接近哪一類植物？","fern",["蕨類","蘚苔","裸子植物","被子植物"],0,"蕨類有維管束，但以孢子繁殖，常見鐵線蕨、筆筒樹、台灣水韭。"),
+  I("圖片辨識：動物界",2,"看圖形特徵：分節、外骨骼、附肢，最可能是哪一門？","insect",["節肢動物門","刺絲胞動物門","軟體動物門","環節動物門"],0,"分節、外骨骼、附肢是節肢動物門的關鍵特徵。"),
+  I("圖片辨識：植物界",3,"看圖形特徵：種子裸露、沒有花，最可能是哪一類？","seed",["裸子植物","被子植物","蘚苔","蕨類"],0,"裸子植物有種子，但種子裸露且沒有花；松、杉、柏、銀杏都屬於這類。"),
+  I("圖片辨識：原核生物界",1,"看圖形特徵：無細胞核、單細胞，最可能屬於哪一界？","bacteria",["原核生物界","植物界","動物界","真菌界"],0,"無細胞核是原核生物界的關鍵判斷點，細菌與藍綠菌都屬於此界。"),
+  I("圖片辨識：原生生物界",1,"看圖形特徵：自營、藻類，最可能屬於哪一群？","algae",["藻類","酵母菌","昆蟲綱","胎盤哺乳類"],0,"藻類是原生生物界中以自營為主的類群，常見昆布、矽藻、石蓴、紫菜。"),
+  I("圖片辨識：植物界",1,"看圖形特徵：無維管束，最可能是哪一類植物？","moss",["蘚苔","蕨類","裸子植物","被子植物"],0,"蘚苔沒有維管束，常見例子包含地錢、土馬騌。"),
+  I("圖片辨識：植物界",2,"看圖形特徵：有花、種子被果實包覆，最可能是哪一類？","flower",["被子植物","裸子植物","蕨類","蘚苔"],0,"被子植物具有花，種子被果實包覆。"),
+  I("圖片辨識：脊椎動物",1,"看圖形特徵：鰓呼吸、外溫，最可能是哪一類？","fish",["魚類","鳥類","哺乳類","爬蟲類"],0,"魚類用鰓呼吸，多為外溫動物。"),
+  I("圖片辨識：脊椎動物",2,"看圖形特徵：羽毛、內溫、卵生，最可能是哪一類？","bird",["鳥類","魚類","兩生類","胎盤哺乳類"],0,"鳥類具有羽毛與翅膀，為內溫且卵生。"),
+  I("圖片辨識：脊椎動物",3,"看圖形特徵：肺呼吸、內溫、哺乳，最可能是哪一類？","mammal",["哺乳類","魚類","節肢動物門","蘚苔"],0,"哺乳類用肺呼吸、為內溫，具有乳腺。"),
+  M("連連看：植物界",2,"把植物類群與關鍵特徵配對。",[["蘚苔","無維管束"],["蕨類","有維管束、孢子繁殖"],["裸子植物","種子裸露"],["被子植物","有花、種子包在果實內"]],"蘚苔沒有維管束；蕨類有維管束但孢子繁殖；裸子植物種子裸露；被子植物有花且種子被果實包覆。"),
+  M("連連看：真菌界",2,"把真菌類別與常見例子配對。",[["黴菌","黑黴菌、青黴菌"],["蕈","木耳、靈芝、毒蠅傘"],["酵母菌","單細胞、常用於發酵"]],"黴菌常見黑黴菌、青黴菌；蕈常見木耳、靈芝、毒蠅傘；酵母菌多為單細胞並可用於發酵。"),
+  M("連連看：脊椎動物",3,"把脊椎動物類群與特徵配對。",[["魚類","用鰓呼吸"],["兩生類","幼體鰓、成體肺"],["鳥類","羽毛、內溫、卵生"],["哺乳類","胎生或卵生、有乳腺"]],"魚類用鰓；兩生類幼體鰓成體肺；鳥類有羽毛且內溫；哺乳類有乳腺。"),
+  M("連連看：原核生物界",2,"把原核相關概念配對。",[["細菌共同特徵","無細胞核、有細胞壁"],["藍綠菌","有葉綠素、無葉綠體"],["球菌、桿菌、螺旋菌","細菌依外型分類"],["原核生物界","地球上最原始的生物"]],"細菌與藍綠菌都沒有細胞核；藍綠菌有葉綠素但沒有葉綠體。"),
+  M("連連看：原生生物界",2,"把原生生物類群與營養方式配對。",[["藻類","自營"],["原生菌類","分解、異營"],["原生動物類","異營"],["變形蟲、草履蟲、眼蟲","原生動物類常見例子"]],"原生生物界可依獲取養分方式分為藻類、原生菌類、原生動物類。"),
+  M("連連看：無脊椎動物",3,"把無脊椎動物門與常見例子配對。",[["刺絲胞動物門","珊瑚、水螅、水母、海葵"],["環節動物門","沙蠶、蚯蚓、水蛭"],["棘皮動物門","海星、海膽、海參"],["節肢動物門","昆蟲、甲殼、蛛形、多足"]],"這些例子都來自無脊椎動物整理表。"),
+  M("連連看：節肢動物",3,"把節肢動物綱別與例子配對。",[["昆蟲綱","跳蚤、衣魚、蒼蠅、蚊子"],["蛛形綱","蜘蛛、蠍子、塵蟎"],["甲殼綱","蝦、蟹、寄居蟹"],["多足綱","馬陸、蜈蚣"]],"節肢動物門包含昆蟲綱、蛛形綱、甲殼綱、多足綱，是動物界中種類最多的一門。"),
+  M("連連看：被子植物",3,"把單子葉與雙子葉植物特徵配對。",[["單子葉植物葉脈","平行脈"],["雙子葉植物葉脈","網狀脈"],["單子葉植物根部","鬚根"],["雙子葉植物根部","軸根"]],"單子葉植物常見平行脈、鬚根；雙子葉植物常見網狀脈、軸根。"),
+  M("連連看：五界判斷",3,"把界別與最重要判斷線索配對。",[["原核生物界","沒有細胞核"],["真菌界","無葉綠體、有菌絲"],["植物界","有葉綠體、細胞壁"],["動物界","無細胞壁"]],"五界題最常用細胞核、細胞壁、葉綠體與營養方式判斷。"),
+  M("連連看：體溫分類",2,"把動物類群與體溫配對。",[["魚類","魚類為外溫"],["爬蟲類","爬蟲類為外溫"],["鳥類","鳥類為內溫"],["哺乳類","哺乳類為內溫"]],"魚類與爬蟲類為外溫，鳥類與哺乳類為內溫。"),
+  S("分類歸位：五界代表",1,"把生物放到正確的界或類群。",["原核生物界","原生生物界","真菌界","動物界"],[["細菌","原核生物界"],["藍綠菌","原核生物界"],["昆布","原生生物界"],["草履蟲","原生生物界"],["木耳","真菌界"],["酵母菌","真菌界"],["水母","動物界"],["人類","動物界"]],"原核生物沒有細胞核；藻類與原生動物屬原生生物界；木耳、酵母菌屬真菌；水母、人類屬動物。"),
+  S("分類歸位：植物界",1,"把植物例子放到正確類群。",["蘚苔","蕨類","裸子植物","被子植物"],[["地錢","蘚苔"],["土馬騌","蘚苔"],["鐵線蕨","蕨類"],["筆筒樹","蕨類"],["松","裸子植物"],["銀杏","裸子植物"],["玫瑰","被子植物"],["玉米","被子植物"]],"地錢、土馬騌屬蘚苔；鐵線蕨、筆筒樹屬蕨類；松、銀杏屬裸子；玫瑰、玉米屬被子。"),
+  S("分類歸位：原生生物界",1,"把例子放到原生生物界的正確類別。",["藻類","原生菌類","原生動物類"],[["昆布","藻類"],["矽藻","藻類"],["紫菜","藻類"],["水黴菌","原生菌類"],["黏菌","原生菌類"],["變形蟲","原生動物類"],["草履蟲","原生動物類"],["眼蟲","原生動物類"]],"藻類自營；原生菌類分解或異營；原生動物類異營。"),
+  S("分類歸位：無脊椎動物",1,"把生物例子放到正確的無脊椎動物門。",["刺絲胞動物門","軟體動物門","環節動物門","節肢動物門"],[["水母","刺絲胞動物門"],["海葵","刺絲胞動物門"],["蝸牛","軟體動物門"],["章魚","軟體動物門"],["蚯蚓","環節動物門"],["水蛭","環節動物門"],["螃蟹","節肢動物門"],["蜘蛛","節肢動物門"]],"水母、海葵屬刺絲胞；蝸牛、章魚屬軟體；蚯蚓、水蛭屬環節；螃蟹、蜘蛛屬節肢。"),
+  S("分類歸位：脊椎動物",1,"把例子放到正確脊椎動物類群。",["魚類","兩生類","爬蟲類","鳥類","哺乳類"],[["鯊魚","魚類"],["海馬","魚類"],["蛙","兩生類"],["蟾蜍","兩生類"],["蛇","爬蟲類"],["龜","爬蟲類"],["企鵝","鳥類"],["鯨魚","哺乳類"],["蝙蝠","哺乳類"]],"魚、兩生、爬蟲、鳥、哺乳可用呼吸、體溫、生殖與例子判斷。"),
+  S("分類歸位：節肢動物",1,"把節肢動物例子放到正確綱別。",["昆蟲綱","蛛形綱","甲殼綱","多足綱"],[["跳蚤","昆蟲綱"],["蒼蠅","昆蟲綱"],["蜘蛛","蛛形綱"],["蠍子","蛛形綱"],["蝦","甲殼綱"],["螃蟹","甲殼綱"],["馬陸","多足綱"],["蜈蚣","多足綱"]],"昆蟲、蛛形、甲殼、多足都屬節肢動物門，但步足數與例子不同。"),
+  S("分類歸位：細胞構造",2,"把特徵放到最適合的生物類群。",["原核生物界","真菌界","植物界","動物界"],[["沒有細胞核","原核生物界"],["細菌與藍綠菌","原核生物界"],["有菌絲、無葉綠體","真菌界"],["木耳、酵母菌","真菌界"],["有葉綠體與細胞壁","植物界"],["蘚苔、蕨類、被子植物","植物界"],["沒有細胞壁","動物界"],["魚類、鳥類、哺乳類","動物界"]],"五界判斷常用細胞核、細胞壁、葉綠體、菌絲與例子。"),
+  S("分類歸位：植物演化重點",2,"把特徵放到最適合的植物類群。",["蘚苔","蕨類","裸子植物","被子植物"],[["無維管束","蘚苔"],["根莖葉體型矮小","蘚苔"],["有維管束","蕨類"],["幼葉捲曲","蕨類"],["毬果","裸子植物"],["種子裸露","裸子植物"],["有花","被子植物"],["種子包在果實內","被子植物"]],"植物分類可用維管束、孢子、種子、花與果實判斷。"),
+  S("分類歸位：單雙子葉",2,"把特徵放到單子葉或雙子葉。",["單子葉植物","雙子葉植物"],[["平行脈","單子葉植物"],["鬚根","單子葉植物"],["花3的倍數","單子葉植物"],["網狀脈","雙子葉植物"],["軸根","雙子葉植物"],["花4或5的倍數","雙子葉植物"]],"單子葉常見平行脈、鬚根、花3倍數；雙子葉常見網狀脈、軸根、花4或5倍數。"),
+  S("分類歸位：動物體溫",3,"把生物例子放到外溫或內溫。",["外溫","內溫"],[["鯊魚","外溫"],["蛙","外溫"],["蛇","外溫"],["龜","外溫"],["企鵝","內溫"],["孔雀","內溫"],["人類","內溫"],["鯨魚","內溫"]],"魚類、兩生類、爬蟲類為外溫；鳥類與哺乳類為內溫。"),
+  S("分類歸位：哺乳類",2,"把哺乳類例子放到正確類型。",["卵生哺乳類","有袋哺乳類","胎盤哺乳類"],[["針鼴","卵生哺乳類"],["鴨嘴獸","卵生哺乳類"],["袋鼠","有袋哺乳類"],["無尾熊","有袋哺乳類"],["人類","胎盤哺乳類"],["鯨魚","胎盤哺乳類"],["蝙蝠","胎盤哺乳類"]],"卵生哺乳類如針鼴、鴨嘴獸；有袋如袋鼠、無尾熊；胎盤如人類、鯨魚、蝙蝠。"),
+  F("刺絲胞動物門",1,"刺絲胞動物門",["有刺絲胞","有觸手","囊狀構造","對外只有一個開口"],["管足","外骨骼","有菌絲","種子裸露"],"刺絲胞動物門具有刺絲胞、觸手、囊狀構造，對外只有一個開口。"),
+  F("節肢動物門",1,"節肢動物門",["身體分節","有外骨骼","有附肢","動物界種類最多"],["有花粉管","有菌絲","無細胞核","種子包覆"],"節肢動物門身體分節，有外骨骼與附肢，是動物界種類最多的一門。"),
+  F("真菌界",1,"真菌界",["有細胞壁","沒有葉綠體","常有菌絲","異營或分解"],["有花","有維管束","有細胞核但沒有細胞壁","用鰓呼吸"],"真菌有細胞壁、無葉綠體，常有菌絲，營養方式為異營或分解。"),
+  F("藍綠菌",2,"藍綠菌",["無細胞核","有細胞壁","有葉綠素","沒有葉綠體"],["有細胞核","有花","有菌絲","有外骨骼"],"藍綠菌屬於原核生物，沒有細胞核，有葉綠素但沒有葉綠體。"),
+  F("藻類",1,"藻類",["自營","常見昆布、矽藻、紫菜","原生生物界","植物界祖先"],["有菌絲","動物界祖先","有外骨骼","有胎盤"],"藻類屬原生生物界，自營，常見昆布、矽藻、石蓴、紫菜。"),
+  F("蕨類",2,"蕨類",["有維管束","以孢子繁殖","幼葉捲曲","鐵線蕨是例子"],["有花","種子包覆","無細胞核","有菌絲"],"蕨類有維管束，以孢子繁殖，幼葉常呈捲曲狀。"),
+  F("裸子植物",2,"裸子植物",["有維管束","有花粉管","種子裸露","松、杉、柏是例子"],["有花","種子包在果實內","有菌絲","有刺絲胞"],"裸子植物有種子但種子裸露，沒有花，常見松、杉、柏、銀杏。"),
+  F("被子植物",2,"被子植物",["有花","有花粉管","種子被果實包覆","玫瑰、稻、玉米是例子"],["種子裸露","沒有維管束","有菌絲","用鰓呼吸"],"被子植物有花，種子被果實包覆。"),
+  F("鳥類",2,"鳥類",["用肺呼吸","內溫","有羽毛","骨骼中空"],["用鰓呼吸","外溫","有菌絲","有管足"],"鳥類用肺呼吸，內溫，有羽毛與中空骨骼。"),
+  F("哺乳類",2,"哺乳類",["用肺呼吸","內溫","有乳腺","可分卵生、有袋、胎盤"],["有羽毛","用鰓呼吸","種子包覆","有刺絲胞"],"哺乳類用肺呼吸、內溫，具有乳腺。"),
+  F("昆蟲綱",2,"昆蟲綱",["3對腳","翅膀可為0、1、2對","跳蚤、蒼蠅是例子","屬於節肢動物門"],["4對腳","5對腳","有管足","有花粉管"],"昆蟲綱屬節肢動物門，具有3對腳，翅膀數可變。"),
+  F("蛛形綱",3,"蛛形綱",["4對腳","蜘蛛是例子","蠍子是例子","屬於節肢動物門"],["3對腳","5對腳","有花","有葉綠體"],"蛛形綱有4對腳，常見蜘蛛、蠍子、塵蟎。"),
+  F("甲殼綱",3,"甲殼綱",["5對腳","蝦、蟹是例子","寄居蟹是例子","第一對步足常特化成螯足"],["3對腳","4對腳","有羽毛","有菌絲"],"甲殼綱常見蝦、蟹、寄居蟹，第一對步足常特化成螯足。"),
+  F("胎盤哺乳類",3,"胎盤哺乳類",["有胎盤","母體內發育完全後產出","人類是例子","鯨魚、蝙蝠是例子"],["卵生","有育兒袋","有羽毛","有外骨骼"],"胎盤哺乳類有胎盤，在母體內發育完全後才產出。"),
+  F("單子葉植物",3,"單子葉植物",["平行脈","鬚根","花3的倍數","玉米、百合可作例子"],["網狀脈","軸根","花4或5的倍數","有菌絲"],"單子葉植物常見平行脈、鬚根，花為3的倍數。"),
+];
+
+let selMode="choice",selLevel="easy",retryMode=false;
+let qs=[],qi=0,score=0,hearts=3,timeLeft=0,timer=null,locked=false;
+let wrongLog=[],selLeft=null,matchState=null,sortState=null,featureState=null;
+let audioCtx=null;
+
+const $=id=>document.getElementById(id);
+const els={
+  levelLabel:$("hud-level"),timeLabel:$("hud-time"),timeBox:$("hud-time-box"),
+  heartsLabel:$("hud-lives"),scoreLabel:$("hud-score"),
+  startScreen:$("start-screen"),quizScreen:$("quiz-screen"),endScreen:$("end-screen"),
+  chapterLabel:$("chapter-label"),countLabel:$("count-label"),
+  progressFill:$("progress-fill"),visualSlot:$("visual-slot"),
+  questionText:$("question-text"),answerArea:$("answer-area"),
+  feedback:$("feedback"),fbTitle:$("fb-title"),fbText:$("fb-text"),
+  nextBtn:$("next-btn"),quitBtn:$("quit-btn"),
+  endScore:$("end-score"),endMax:$("end-max"),rankBadge:$("rank-badge"),endMsg:$("end-msg"),
+  reviewList:$("review-list"),retryWrongBtn:$("retry-wrong-btn"),restartBtn:$("restart-btn")
+};
+
+$("mode-grid").addEventListener("click",e=>{
+  const c=e.target.closest(".mode-card");if(!c)return;
+  selMode=c.dataset.mode;
+  document.querySelectorAll(".mode-card").forEach(x=>x.classList.remove("sel"));
+  c.classList.add("sel");
+});
+$("level-grid").addEventListener("click",e=>{
+  const c=e.target.closest(".level-card");if(!c)return;
+  selLevel=c.dataset.level;
+  document.querySelectorAll(".level-card").forEach(x=>x.classList.remove("sel"));
+  c.classList.add("sel");
+});
+$("start-btn").addEventListener("click",()=>startGame(false));
+els.nextBtn.addEventListener("click",()=>{qi++;renderQ();});
+els.quitBtn.addEventListener("click",()=>{clearInterval(timer);document.body.classList.remove("time-alert");showScreen("startScreen");timeLeft=0;updateHUD();});
+els.restartBtn.addEventListener("click",()=>{showScreen("startScreen");timeLeft=0;updateHUD();});
+els.retryWrongBtn.addEventListener("click",()=>startGame(true));
+
+function showScreen(name){
+  [els.startScreen,els.quizScreen,els.endScreen].forEach(s=>s.classList.remove("active"));
+  els[name].classList.add("active");
+}
+
+function ensureAudio(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended")audioCtx.resume();
+}
+function playTone(type){
+  try{
+    ensureAudio();
+    const now=audioCtx.currentTime;
+    const pairs=type==="good"?[[620,.06],[820,.06]]:type==="bad"?[[240,.06],[180,.06]]:[[880,.035]];
+    pairs.forEach(([freq,vol],i)=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type=type==="tick"?"square":"sine";
+      o.frequency.setValueAtTime(freq,now+i*.08);
+      g.gain.setValueAtTime(vol,now+i*.08);
+      g.gain.exponentialRampToValueAtTime(.001,now+i*.08+.12);
+      o.connect(g);g.connect(audioCtx.destination);
+      o.start(now+i*.08);o.stop(now+i*.08+.13);
+    });
+  }catch(e){}
+}
+function flash(type){
+  document.body.classList.remove("flash-good","flash-bad");
+  void document.body.offsetWidth;
+  document.body.classList.add(type==="good"?"flash-good":"flash-bad");
+  setTimeout(()=>document.body.classList.remove("flash-good","flash-bad"),450);
+}
+
+function updateHUD(){
+  const lv=LEVELS[selLevel];
+  const mLabel=selMode==="choice"?"選擇":selMode==="sort"?"歸位":selMode==="feature"?"勾選":"配對";
+  els.levelLabel.textContent=retryMode?`${mLabel}錯題`:`${lv.label} ${mLabel}`;
+  els.timeLabel.textContent=timeLeft>0?`${timeLeft}s`:"—";
+  els.heartsLabel.textContent=hearts>0?"♥".repeat(hearts)+"🖤".repeat(Math.max(0,(LEVELS[selLevel]?.hearts||3)-hearts)):"💀";
+  els.scoreLabel.textContent=score;
+  els.progressFill.style.width=qs.length?`${(qi/qs.length)*100}%`:"0%";
+  els.timeBox.classList.toggle("time-low",timeLeft>0&&timeLeft<=5);
+  document.body.classList.toggle("time-alert",timeLeft>0&&timeLeft<=5&&!locked);
+}
+
+function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
+function pickQ(lv,mode){
+  const lv0=LEVELS[lv];
+  const pool=Q.filter(q=>q.type===mode&&q.d<=lv0.maxD);
+  return shuffle(pool).slice(0,lv0.count);
+}
+
+function startGame(useWrong){
+  ensureAudio();
+  retryMode=useWrong;
+  qs=useWrong?wrongLog.map(w=>w.q):pickQ(selLevel,selMode);
+  qi=0;score=0;hearts=LEVELS[selLevel].hearts;wrongLog=[];
+  showScreen("quizScreen");
+  renderQ();
+}
+
+function startTimer(){
+  clearInterval(timer);
+  timeLeft=LEVELS[selLevel].seconds;
+  updateHUD();
+  timer=setInterval(()=>{
+    timeLeft--;
+    if(timeLeft>0&&timeLeft<=5)playTone("tick");
+    updateHUD();
+    if(timeLeft<=0)handleTimeout();
+  },1000);
+}
+
+function renderQ(){
+  if(qi>=qs.length||hearts<=0){finishGame();return;}
+  locked=false;selLeft=null;matchState=null;sortState=null;featureState=null;
+  const q=qs[qi];
+  els.chapterLabel.textContent=q.ch;
+  els.countLabel.textContent=`第 ${qi+1} 題 / ${qs.length}`;
+  els.questionText.textContent=q.q;
+  els.visualSlot.innerHTML="";
+  els.answerArea.innerHTML="";
+  els.feedback.className="feedback";
+  els.nextBtn.classList.add("hidden");
+
+  if(q.type==="choice"||q.type==="image"){
+    if(q.type==="image"){
+      const d=document.createElement("div");d.className="bio-visual";
+      d.innerHTML=VISUALS[q.vis]||"";els.visualSlot.appendChild(d);
+    }
+    renderChoice(q);
+  }else if(q.type==="match"){renderMatch(q);}
+  else if(q.type==="sort"){renderSort(q);}
+  else if(q.type==="feature"){renderFeature(q);}
+
+  startTimer();updateHUD();
+}
+
+function renderChoice(q){
+  const opts=shuffle(q.opts.map((l,i)=>({l,i})));
+  q._opts=opts;
+  const g=document.createElement("div");g.className="options-grid";
+  opts.forEach((o,idx)=>{
+    const b=document.createElement("button");b.className="opt-btn";b.textContent=o.l;
+    b.addEventListener("click",()=>handleChoice(idx,q));
+    g.appendChild(b);
+  });
+  els.answerArea.appendChild(g);
+}
+function handleChoice(idx,q){
+  if(locked)return;locked=true;clearInterval(timer);
+  const btns=[...els.answerArea.querySelectorAll(".opt-btn")];
+  const ok=q._opts[idx].i===q.ans;
+  btns.forEach((b,i)=>{b.disabled=true;if(q._opts[i].i===q.ans)b.classList.add("correct");});
+  if(!ok)btns[idx].classList.add("wrong");
+  if(ok){
+    score+=10+Math.max(0,timeLeft);
+    showFeedback("good","答對了，這題穩住了。",q.hint);
+    playTone("good");flash("good");
+  }else{
+    hearts--;
+    wrongLog.push({q,sel:q._opts[idx].l});
+    showFeedback("bad",CHEERS[Math.floor(Math.random()*CHEERS.length)],`正確答案：${q.opts[q.ans]}。${q.hint}`);
+    playTone("bad");flash("bad");
+  }
+  els.nextBtn.classList.remove("hidden");updateHUD();
+}
+
+function renderMatch(q){
+  matchState={solved:0,total:q.pairs.length,map:new Map(q.pairs)};
+  const left=shuffle(q.pairs.map(p=>p[0]));
+  const right=shuffle(q.pairs.map(p=>p[1]));
+  const board=document.createElement("div");board.className="match-board";
+  const lc=document.createElement("div");lc.className="match-col";
+  lc.innerHTML='<div class="match-col-title">類群／概念</div>';
+  const rc=document.createElement("div");rc.className="match-col";
+  rc.innerHTML='<div class="match-col-title">特徵／例子</div>';
+  left.forEach(v=>{const b=mkMatchBtn(v,"left");lc.appendChild(b);});
+  right.forEach(v=>{const b=mkMatchBtn(v,"right");rc.appendChild(b);});
+  board.appendChild(lc);board.appendChild(rc);
+  els.answerArea.appendChild(board);
+}
+function mkMatchBtn(v,side){
+  const b=document.createElement("button");b.className="match-card";
+  b.textContent=v;b.dataset.side=side;b.dataset.val=v;
+  b.addEventListener("click",()=>onMatchClick(b));
+  return b;
+}
+function onMatchClick(btn){
+  if(locked||btn.classList.contains("done"))return;
+  if(btn.dataset.side==="left"){
+    document.querySelectorAll(".match-card[data-side='left']").forEach(b=>b.classList.remove("sel"));
+    selLeft=btn;btn.classList.add("sel");return;
+  }
+  if(!selLeft)return;
+  if(matchState.map.get(selLeft.dataset.val)===btn.dataset.val){
+    [selLeft,btn].forEach(b=>{b.classList.add("correct","done");b.classList.remove("sel");b.disabled=true;});
+    selLeft=null;matchState.solved++;score+=8;playTone("good");updateHUD();
+    if(matchState.solved===matchState.total){
+      locked=true;clearInterval(timer);
+      score+=10+Math.max(0,timeLeft);
+      showFeedback("good","配對完成，這組概念更清楚了。",qs[qi].hint);
+      els.nextBtn.classList.remove("hidden");flash("good");updateHUD();
+    }
+  }else{
+    [selLeft,btn].forEach(b=>b.classList.add("wrong"));
+    playTone("bad");
+    setTimeout(()=>{selLeft?.classList.remove("wrong","sel");btn.classList.remove("wrong");selLeft=null;},400);
+  }
+}
+
+function renderSort(q){
+  sortState={sel:null,placed:new Map(),rendered:shuffle(q.items.map((it,i)=>({...it,i})))};
+  const board=document.createElement("div");board.className="sort-board";
+  const zones=document.createElement("div");zones.className="sort-zones";
+  q.cats.forEach(cat=>{
+    const z=document.createElement("div");z.className="sort-zone";z.dataset.cat=cat;
+    z.innerHTML=`<strong>${cat}</strong><div class="sort-drop-list"></div>`;
+    z.addEventListener("click",()=>placeCard(z,q));
+    zones.appendChild(z);
+  });
+  const items=document.createElement("div");items.className="sort-items";
+  sortState.rendered.forEach((it,idx)=>{
+    const b=document.createElement("button");b.className="sort-card";b.textContent=it.t;b.dataset.idx=idx;
+    b.addEventListener("click",()=>{
+      if(locked||b.classList.contains("done"))return;
+      sortState.sel=idx;
+      document.querySelectorAll(".sort-card").forEach(c=>c.classList.remove("sel"));
+      b.classList.add("sel");
+    });
+    items.appendChild(b);
+  });
+  board.appendChild(zones);board.appendChild(items);
+  els.answerArea.appendChild(board);
+  const sub=document.createElement("button");sub.className="submit-btn";sub.textContent="提交分類 →";
+  sub.addEventListener("click",()=>handleSort(false,q));
+  els.answerArea.appendChild(sub);
+}
+function placeCard(zone,q){
+  if(locked||sortState.sel===null)return;
+  const idx=sortState.sel;
+  const it=sortState.rendered[idx];
+  const card=els.answerArea.querySelector(`.sort-card[data-idx="${idx}"]`);
+  if(!card||card.classList.contains("done"))return;
+  const pill=document.createElement("div");pill.className="sort-pill";
+  pill.textContent=it.t;pill.dataset.idx=idx;pill.dataset.cat=zone.dataset.cat;
+  zone.querySelector(".sort-drop-list").appendChild(pill);
+  sortState.placed.set(idx,zone.dataset.cat);
+  card.classList.add("done","sel");card.disabled=true;sortState.sel=null;updateHUD();
+}
+function handleSort(timedOut,q){
+  if(locked)return;locked=true;clearInterval(timer);
+  let wrong=0,missed=0;
+  const pills=[...els.answerArea.querySelectorAll(".sort-pill")];
+  sortState.rendered.forEach((it,idx)=>{
+    const placed=sortState.placed.get(idx);
+    if(!placed){missed++;return;}
+    const pill=pills.find(p=>Number(p.dataset.idx)===idx);
+    if(placed===it.c)pill?.classList.add("correct");
+    else{wrong++;pill?.classList.add("wrong");}
+  });
+  const ok=!timedOut&&wrong===0&&missed===0;
+  if(ok){
+    score+=10+Math.max(0,timeLeft);
+    showFeedback("good","全部歸位正確，分類很清楚。",q.hint);
+    playTone("good");flash("good");
+  }else{
+    hearts--;
+    const ans=q.items.map(it=>`${it.t}→${it.c}`).join("；");
+    wrongLog.push({q,sel:timedOut?"時間到未完成":`放錯${wrong}張，未放${missed}張`});
+    showFeedback("bad",timedOut?"時間到，現在補起來。":CHEERS[Math.floor(Math.random()*CHEERS.length)],`正確：${ans}。${q.hint}`);
+    playTone("bad");flash("bad");
+  }
+  els.nextBtn.classList.remove("hidden");updateHUD();
+}
+
+function renderFeature(q){
+  featureState={sel:new Set(),rendered:shuffle(q.features.map((f,i)=>({...f,i})))};
+  const g=document.createElement("div");g.className="feature-grid";
+  featureState.rendered.forEach((f,idx)=>{
+    const b=document.createElement("button");b.className="feat-btn";b.textContent=f.t;b.dataset.idx=idx;
+    b.addEventListener("click",()=>{
+      if(locked)return;
+      if(featureState.sel.has(idx)){featureState.sel.delete(idx);b.classList.remove("sel");}
+      else{featureState.sel.add(idx);b.classList.add("sel");}
+    });
+    g.appendChild(b);
+  });
+  els.answerArea.appendChild(g);
+  const sub=document.createElement("button");sub.className="submit-btn";sub.textContent="提交勾選 →";
+  sub.addEventListener("click",()=>handleFeature(false,q));
+  els.answerArea.appendChild(sub);
+}
+function handleFeature(timedOut,q){
+  if(locked)return;locked=true;clearInterval(timer);
+  let hasWrong=false,hasMissed=false;
+  const btns=[...els.answerArea.querySelectorAll(".feat-btn")];
+  const picks=[];
+  featureState.rendered.forEach((f,idx)=>{
+    const sel=featureState.sel.has(idx);
+    const btn=btns[idx];btn.disabled=true;
+    if(sel)picks.push(f.t);
+    if(f.ok&&sel)btn.classList.add("correct");
+    if(!f.ok&&sel){hasWrong=true;btn.classList.add("wrong");}
+    if(f.ok&&!sel){hasMissed=true;btn.classList.add("missed");}
+  });
+  const ok=!timedOut&&!hasWrong&&!hasMissed;
+  if(ok){
+    score+=10+Math.max(0,timeLeft);
+    showFeedback("good","選得很準，這組特徵抓到了。",q.hint);
+    playTone("good");flash("good");
+  }else{
+    hearts--;
+    const correct=q.features.filter(f=>f.ok).map(f=>f.t).join("、");
+    wrongLog.push({q,sel:picks.length?picks.join("、"):"未勾選"});
+    showFeedback("bad",timedOut?"時間到，現在補起來。":CHEERS[Math.floor(Math.random()*CHEERS.length)],`正確特徵：${correct}。${q.hint}`);
+    playTone("bad");flash("bad");
+  }
+  els.nextBtn.classList.remove("hidden");updateHUD();
+}
+
+function handleTimeout(){
+  if(locked)return;
+  const q=qs[qi];
+  if(q.type==="sort"){locked=false;handleSort(true,q);}
+  else if(q.type==="feature"){locked=false;handleFeature(true,q);}
+  else if(q.type==="match"){
+    locked=true;clearInterval(timer);
+    hearts--;
+    wrongLog.push({q,sel:"未完成配對"});
+    showFeedback("bad","時間到，現在補起來。",q.hint);
+    els.nextBtn.classList.remove("hidden");playTone("bad");flash("bad");updateHUD();
+  }else{
+    locked=true;clearInterval(timer);
+    const btns=[...els.answerArea.querySelectorAll(".opt-btn")];
+    btns.forEach((b,i)=>{b.disabled=true;if(q._opts[i].i===q.ans)b.classList.add("correct");});
+    hearts--;
+    wrongLog.push({q,sel:"未作答"});
+    showFeedback("bad","時間到，現在補起來。",`正確答案：${q.opts[q.ans]}。${q.hint}`);
+    els.nextBtn.classList.remove("hidden");playTone("bad");flash("bad");updateHUD();
+  }
+}
+
+function showFeedback(type,title,text){
+  els.feedback.className=`feedback ${type} show`;
+  els.fbTitle.textContent=title;
+  els.fbText.textContent=text;
+}
+
+function finishGame(){
+  clearInterval(timer);document.body.classList.remove("time-alert");
+  showScreen("endScreen");
+  const pct=qs.length?score/(qs.length*10):0;
+  let rank,rc,msg;
+  if(pct>=.9){rank="SSR";rc="#ffe066";msg="完美作答！你是五界生物分類大師！";}
+  else if(pct>=.7){rank="A";rc="#00cfff";msg="表現優秀！再多練習一次就能達到SSR！";}
+  else if(pct>=.5){rank="B";rc="#39ff90";msg="有點基礎了！繼續把易混淆的地方補強吧。";}
+  else{rank="C";rc="#c77dff";msg="沒關係，看看錯題提示再戰！";}
+  els.endScore.textContent=score;
+  els.endMax.textContent=`/ ${qs.length*10} 分（基礎）`;
+  els.rankBadge.textContent=rank;
+  els.rankBadge.style.cssText=`background:rgba(0,0,0,.2);border:2px solid ${rc};color:${rc};display:inline-block;padding:8px 28px;border-radius:30px;font-size:1.4rem;font-weight:900;letter-spacing:2px;margin-bottom:20px;`;
+  els.endMsg.textContent=msg;
+  els.retryWrongBtn.classList.toggle("hidden",wrongLog.length===0);
+  renderReview();updateHUD();
+}
+function renderReview(){
+  els.reviewList.innerHTML="";
+  if(wrongLog.length===0){
+    els.reviewList.innerHTML='<div class="review-item"><strong style="color:var(--ng)">沒有錯題！</strong><div class="ri-hint">可以挑戰更高難度，或重新來一輪加強速度。</div></div>';
+    return;
+  }
+  wrongLog.forEach((entry,i)=>{
+    const q=entry.q;
+    let correctAns;
+    if(q.type==="match")correctAns="完成全部正確配對";
+    else if(q.type==="sort")correctAns="把所有卡片放入正確分類框";
+    else if(q.type==="feature")correctAns=q.features.filter(f=>f.ok).map(f=>f.t).join("、");
+    else correctAns=q.opts[q.ans];
+    const d=document.createElement("div");d.className="review-item";
+    d.innerHTML=`<strong>${i+1}. ${q.q}</strong><div class="ri-yours">你的答案：${entry.sel}</div><div class="ri-correct">正確答案：${correctAns}</div><div class="ri-hint">${q.hint}</div>`;
+    els.reviewList.appendChild(d);
+  });
+}
+
+updateHUD();
+</script>
+</body>
+</html>
